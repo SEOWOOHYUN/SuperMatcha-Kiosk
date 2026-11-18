@@ -12,10 +12,10 @@ test('payment blocks double submission and supports explicit failure then retry'
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const payment = new PaymentModel();
   const first = payment.pay('card', 5800, true);
-  await assert.rejects(payment.pay('easy', 5800));
+  await assert.rejects(payment.pay('card', 5800));
   t.mock.timers.tick(1500);
   assert.equal(await first, false);
-  const retry = payment.pay('easy', 5800);
+  const retry = payment.pay('easy', 5800, false, 'kakao');
   t.mock.timers.tick(1500);
   assert.equal(await retry, true);
   assert.equal(payment.pending, false);
@@ -35,4 +35,18 @@ test('corrupt persisted state is reported, never overwritten', () => {
     assert.throws(() => new OrderModel(storage).complete(5800));
   }
   assert.equal(written, false);
+});
+test('easy payment requires a supported provider before scanning can pay', async () => {
+  const payment = new PaymentModel();
+  await assert.rejects(payment.pay('easy', 5800));
+  await assert.rejects(payment.pay('easy', 5800, false, 'unknown'));
+});
+test('each supported easy-pay provider can finish a simulated scan', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const payment = new PaymentModel();
+  for (const provider of ['kakao', 'toss', 'naver']) {
+    const result = payment.pay('easy', 5800, false, provider);
+    t.mock.timers.tick(1500);
+    assert.equal(await result, true);
+  }
 });

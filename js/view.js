@@ -1,4 +1,5 @@
 import { categoryNames } from './menu-data.js';
+import { payProviders } from './payment.js';
 import { itemPrice } from './cart.js';
 export const money = value => value.toLocaleString('ko-KR');
 export const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -64,4 +65,21 @@ export function replaceMarkup(container, markup) {
   const match = controls.find(control => id ? control.id === id : data?.action && Object.keys(data).every(key => control.dataset[key] === data[key]));
   const fallback = data?.action?.endsWith('quantity') && controls.find(control => control.dataset.action === data.action && control.dataset.index === data.index);
   (match || fallback)?.focus();
+}
+export function providersView(total, orderType) {
+  return `${header()}<section class="page-content scroll-area">${title('EASY PAY', '사용하실 간편결제를 선택해 주세요', orderType)}
+    <div class="payment-total total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div>
+    <div class="provider-list">${Object.entries(payProviders).map(([id, provider]) => `<button data-action="provider" data-provider="${id}"><span class="provider-logo ${id}">${provider.label}</span><span>${provider.name}</span><span class="arrow" aria-hidden="true">↗</span></button>`).join('')}</div>
+    <p class="payment-note">휴대전화에서 선택한 앱의 결제 바코드를 준비해 주세요.</p></section>
+    <footer class="bottom-bar"><div class="actions"><button data-action="back-payment">이전</button></div></footer>`;
+}
+export function barcodeView(provider, total, pending, error = '') {
+  const service = payProviders[provider];
+  return `${header()}<section class="page-content scroll-area scan-content">${title('SCAN & PAY', `${service.name} 결제 바코드를 스캔해 주세요`)}
+    <span class="provider-logo ${provider}">${service.label}</span>
+    <div class="scanner" aria-label="결제 바코드 스캔 안내"><div class="scan-phone"><span class="phone-camera"></span><span class="scan-app">${service.label}</span><svg viewBox="0 0 150 70" role="img" aria-label="예시 바코드"><path fill="currentColor" d="M3 5h3v60H3z M10 5h6v60h-6z M21 5h2v60h-2z M27 5h8v60h-8z M40 5h3v60h-3z M47 5h2v60h-2z M54 5h7v60h-7z M66 5h3v60h-3z M74 5h6v60h-6z M84 5h2v60h-2z M91 5h8v60h-8z M104 5h3v60h-3z M113 5h6v60h-6z M124 5h2v60h-2z M132 5h4v60h-4z M141 5h6v60h-6z"/></svg><span class="scan-demo">DEMO</span></div><span class="scan-line"></span></div>
+    <p class="scan-instruction">휴대전화의 화면 밝기를 높이고<br>결제 바코드를 리더기에 대 주세요.</p>
+    <div class="feedback ${error ? 'error' : ''}" role="status">${pending ? '<span class="spinner"></span> 바코드를 확인하고 있습니다…' : escape(error) || '바코드 스캔 대기 중'}</div>
+    <p class="payment-note">체험 화면입니다. 아래 버튼으로 스캔 완료를 체험할 수 있습니다.</p></section>
+    <footer class="bottom-bar"><div class="total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div><div class="actions"><button data-action="back-providers" ${pending ? 'disabled' : ''}>이전</button><button class="primary" data-action="scan-pay" data-method="easy" ${pending ? 'disabled' : ''}>스캔 완료 체험</button></div></footer>`;
 }

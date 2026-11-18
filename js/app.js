@@ -1,9 +1,9 @@
 import { MenuModel } from './menu.js';
 import { CartModel } from './cart.js';
-import { PaymentModel } from './payment.js';
+import { PaymentModel, payProviders } from './payment.js';
 import { StampModel, editPhone } from './stamp.js';
 import { OrderModel, readState } from './order.js';
-import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView, replaceMarkup } from './view.js';
+import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView, providersView, barcodeView, replaceMarkup } from './view.js';
 const menus = new MenuModel();
 const cart = new CartModel();
 const payment = new PaymentModel();
@@ -12,6 +12,8 @@ const orders = new OrderModel(storage);
 let order = null;
 let completionTimer;
 let paymentError = '';
+let easyProvider = '';
+let failNextScan = false;
 const stamps = new StampModel();
 let enrollment = null;
 let rewards = {phone:'', consent:false, balance:null, error:''};
@@ -33,6 +35,11 @@ function render() {
     replaceMarkup(root, paymentView(cart.getTotal(), orderType, payment.pending, paymentError));
     root.querySelector('.home').disabled = payment.pending;
   }
+  if (screen === 'easy-providers') replaceMarkup(root, providersView(cart.getTotal(), orderType));
+  if (screen === 'barcode') {
+    replaceMarkup(root, barcodeView(easyProvider, cart.getTotal(), payment.pending, paymentError));
+    root.querySelector('.home').disabled = payment.pending;
+  }
   if (screen === 'complete') replaceMarkup(root, completeView(order, orderType, 10));
 }
 function go(next) {
@@ -41,7 +48,7 @@ function go(next) {
   root.querySelector('h1')?.focus();
 }
 function reset() {
-  clearRewards();
+  clearRewards(); easyProvider = ''; failNextScan = false;
   clearInterval(completionTimer); order = null; paymentError = '';
   cart.clear(); orderType = ''; category = menus.categories[0]; draft = null;
   if (dialog.open) dialog.close();
@@ -103,10 +110,20 @@ document.addEventListener('click', async event => {
       enrollment = {phone:rewards.phone, consent:true}; return go('payment');
     }
     if (action === 'back-cart') { clearRewards(); return go('cart'); }
-    if (action === 'pay' && screen === 'payment' && cart.items.length) {
-      const fail = root.querySelector('#fail-payment').checked;
+    if (action === 'back-payment') { paymentError = ''; return go('payment'); }
+    if (action === 'back-providers') { paymentError = ''; return go('easy-providers'); }
+    if (action === 'provider' && screen === 'easy-providers' && Object.hasOwn(payProviders, button.dataset.provider)) {
+      easyProvider = button.dataset.provider; paymentError = ''; return go('barcode');
+    }
+    if (action === 'pay' && screen === 'payment' && button.dataset.method === 'easy') {
+      failNextScan = root.querySelector('#fail-payment').checked;
+      paymentError = ''; return go('easy-providers');
+    }
+    if (((action === 'pay' && screen === 'payment') || (action === 'scan-pay' && screen === 'barcode')) && cart.items.length) {
+      const fail = action === 'scan-pay' ? failNextScan : root.querySelector('#fail-payment').checked;
+      failNextScan = false;
       paymentError = '';
-      const result = payment.pay(button.dataset.method, cart.getTotal(), fail);
+      const result = payment.pay(button.dataset.method, cart.getTotal(), fail, easyProvider);
       render();
       try {
         if (!await result) { paymentError = '결제가 완료되지 않았습니다. 다시 시도하거나 다른 수단을 선택해 주세요.'; return render(); }
