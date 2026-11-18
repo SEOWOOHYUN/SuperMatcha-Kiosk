@@ -25,7 +25,7 @@ let orderType = '';
 let draft = null;
 let lastMenuId = '';
 function render() {
-  if (screen === 'start') replaceMarkup(root, startView(menus.get('M01')));
+  if (screen === 'start') replaceMarkup(root, startView());
   if (screen === 'menu') replaceMarkup(root, menuView(menus, category, cart.getCount(), cart.getTotal()));
   if (screen === 'cart') replaceMarkup(root, cartView(cart, orderType));
   if (screen === 'rewards') replaceMarkup(root, rewardsView(rewards, cart.getTotal()));

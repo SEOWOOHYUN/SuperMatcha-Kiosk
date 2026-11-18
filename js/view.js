@@ -5,9 +5,9 @@ export const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&am
 export const picture = (menu, className = '') => `<img class="product-photo ${className}" src="${menu.image}" alt="${escape(menu.name)}" referrerpolicy="no-referrer">`;
 export const header = () => `<header class="topbar"><span class="wordmark">SUPER MATCHA</span><button class="home" data-action="home">처음으로</button></header>`;
 export const title = (en, ko, orderType = '') => `<div class="page-title"><h1 tabindex="-1">${en}</h1>${orderType ? `<span class="badge">${orderType}</span>` : ''}<p>${ko}</p></div>`;
-export function startView(menu) {
-  return `<section class="start screen"><div class="start-logo" aria-label="SUPER MATCHA">SUPER<br>MATCHA</div>
-    <div class="hero-photo">${picture(menu)}</div><div class="start-bottom"><p>이용 방법을 선택해 주세요</p>
+export function startView() {
+  return `<section class="start screen"><h1 class="start-logo" aria-label="SUPER MATCHA">SUPER<br>MATCHA</h1>
+    <div class="start-bottom"><p>이용 방법을 선택해 주세요</p>
     <div class="actions"><button data-action="start" data-type="먹고 가기">먹고 가기<span>EAT IN</span></button><button data-action="start" data-type="포장하기">포장하기<span>TAKE OUT</span></button></div>
     <small class="demo-label">UI DEMO · 실제 결제가 발생하지 않습니다</small></div></section>`;
 }
