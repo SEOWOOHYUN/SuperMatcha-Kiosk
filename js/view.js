@@ -30,3 +30,16 @@ export function cartView(cart, orderType) {
   return `${header()}<section class="page-content scroll-area">${title('MY ORDER', '장바구니', orderType)}<div class="cart-list">${cart.items.length ? cart.items.map((item, i) => `<article class="cart-item">${picture(item.menu)}<div class="cart-detail"><h2>${item.menu.nameEn}</h2><p>${item.menu.name}</p><small>${Object.values(item.selected).join(' · ') || '기본'}</small>${quantityControl(item.quantity, 'cart-quantity', i)}</div><div class="line-price"><button class="delete" data-action="remove" data-index="${i}" aria-label="${item.menu.name} 삭제">삭제</button><strong>${money(itemPrice(item))}<small>원</small></strong></div></article>`).join('') : '<div class="empty"><span>YOUR NEXT<br>GREEN MOMENT.</span><p>장바구니가 비어 있어요.<br>좋아하는 메뉴를 담아 주세요.</p></div>'}</div></section>
     <footer class="bottom-bar"><div class="total"><span>TOTAL <small>총 주문 금액</small></span><strong>${money(cart.getTotal())}<small>원</small></strong></div><div class="actions"><button data-action="back-menu">메뉴 추가</button><button class="primary" data-action="checkout" ${cart.items.length ? '' : 'disabled'}>결제하기</button></div></footer>`;
 }
+export function paymentView(total, orderType, pending, error = '') {
+  const cardIcon = '<svg viewBox="0 0 48 40" aria-hidden="true"><rect x="3" y="7" width="42" height="28" rx="4" fill="currentColor"/><path d="M3 15h42" stroke="#03bd5a" stroke-width="5"/><path d="M10 27h9" stroke="#eee" stroke-width="3"/></svg>';
+  const phoneIcon = '<svg viewBox="0 0 48 40" aria-hidden="true"><rect x="14" y="2" width="21" height="36" rx="4" fill="currentColor"/><path d="M18 8h13v22H18z" fill="#03bd5a"/><circle cx="24.5" cy="34" r="1.5" fill="#eee"/></svg>';
+  return `${header()}<section class="page-content scroll-area">${title('PAYMENT', '결제 수단을 선택해 주세요', orderType)}
+    <div class="payment-total total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div>
+    <div class="payment-methods">${[['card','CARD','카드 결제',cardIcon],['easy','EASY PAY','간편 결제',phoneIcon]].map(([method,en,ko,icon]) => `<button data-action="pay" data-method="${method}" ${pending ? 'disabled' : ''}>${icon}<span><strong>${en}</strong><small>${ko}</small></span><span class="arrow" aria-hidden="true">↗</span></button>`).join('')}</div>
+    <p class="payment-note">실제 청구가 없는 가상 결제입니다.</p><label class="simulate"><input type="checkbox" id="fail-payment" ${pending ? 'disabled' : ''}> 이번 결제 실패 체험</label>
+    <div class="feedback ${error ? 'error' : ''}" role="status">${pending ? '<span class="spinner"></span> 결제를 진행하고 있습니다…' : escape(error)}</div></section>
+    <footer class="bottom-bar"><div class="actions"><button data-action="back-cart" ${pending ? 'disabled' : ''}>이전</button></div></footer>`;
+}
+export function completeView(order, orderType, seconds) {
+  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="complete screen"><div><h1 tabindex="-1">THANK YOU</h1><p>주문이 완료되었습니다 · ${orderType}</p></div><div class="order-number"><span>ORDER NO.</span><strong>${order.orderNo}</strong></div><p class="pickup">주문번호가 호출되면 음료를 받아 가세요.<br><span id="countdown">${seconds}</span>초 후 처음 화면으로 돌아갑니다.</p></section><footer class="bottom-bar complete-footer"><div class="actions"><button data-action="finish">확인</button></div></footer>`;
+}
