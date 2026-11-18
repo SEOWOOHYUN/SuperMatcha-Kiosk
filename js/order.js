@@ -1,3 +1,4 @@
+import { validateEnrollment, rewardAmount } from './stamp.js';
 export const STORAGE_KEY = 'supermatcha_kiosk_v1';
 export function readState(storage) {
   try {
@@ -13,14 +14,20 @@ export function readState(storage) {
 }
 export class OrderModel {
   constructor(storage) { this.storage = storage; }
-  complete(total) {
+  complete(total, enrollment = null) {
     if (!Number.isSafeInteger(total) || total <= 0) throw new Error('주문 금액을 확인해 주세요.');
+    if (enrollment) validateEnrollment(enrollment.phone, enrollment.consent);
     const state = readState(this.storage);
+    const earned = enrollment ? rewardAmount(total) : 0;
+    const balance = enrollment ? (state.rewards[enrollment.phone] ?? 0) + earned : 0;
+    if (!Number.isSafeInteger(balance)) throw new Error('적립 한도를 초과했습니다. 직원에게 문의해 주세요.');
+    if (enrollment) state.rewards[enrollment.phone] = balance;
     const orderNo = state.lastOrderNo + 1;
     if (!Number.isSafeInteger(orderNo)) throw new Error('주문번호를 발급할 수 없습니다. 직원에게 문의해 주세요.');
     state.lastOrderNo = orderNo;
+    // One write keeps the order sequence and reward credit atomic.
     try { this.storage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch { throw new Error('주문을 저장하지 못했습니다. 저장 공간을 확인한 후 다시 시도해 주세요.'); }
-    return { orderNo, total };
+    return { orderNo, total, earned, balance };
   }
 }
