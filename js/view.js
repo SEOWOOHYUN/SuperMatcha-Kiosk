@@ -48,8 +48,20 @@ export function rewardsView(rewards, total) {
   return `${header()}<section class="page-content scroll-area">${title('REWARDS', '결제금액의 2%를 적립해 드려요')}
     <div class="consent-panel"><strong>개인정보 수집·이용 동의</strong><p>수집 항목: 휴대전화번호, 적립 금액<br>이용 목적: 적립 내역 조회 및 적립<br>보관: 이 브라우저의 데이터 삭제 시까지<br>동의를 거부해도 적립 없이 주문할 수 있습니다.</p><label><input id="consent" type="checkbox" ${rewards.consent ? 'checked' : ''}> 위 내용에 동의합니다</label></div>
     <label class="sr-only" for="phone">적립할 휴대전화번호</label><input id="phone" class="phone-input" type="tel" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="010-0000-0000" value="${formatted}" ${rewards.consent ? '' : 'disabled'} aria-describedby="phone-help"><p id="phone-help" class="phone-help">010으로 시작하는 11자리 번호</p>
-    <div class="keypad">${['1','2','3','4','5','6','7','8','9','지우기','0','전체 삭제'].map(key => `<button data-action="key" data-key="${key}" ${rewards.consent ? '' : 'disabled'} class="${key.length > 1 ? 'text-key' : ''}">${key}</button>`).join('')}</div>
+    <div class="keypad">${['1','2','3','4','5','6','7','8','9','010','0','지우기','전체 삭제'].map(key => `<button data-action="key" data-key="${key}" ${rewards.consent && (key !== '010' || !rewards.phone) ? '' : 'disabled'} class="${key === '전체 삭제' ? 'clear-key text-key' : key === '지우기' ? 'text-key' : ''}">${key}</button>`).join('')}</div>
     ${rewards.balance !== null ? `<div class="reward-balance"><span>현재 적립금</span><strong>${money(rewards.balance)}원</strong></div><div class="expected-reward"><span>이번 주문 적립 예정</span><strong>+${money(Math.floor(total / 50))}원</strong></div>` : ''}
     <div class="feedback ${rewards.error ? 'error' : ''}" role="status">${escape(rewards.error)}</div></section>
     <footer class="bottom-bar"><div class="actions"><button data-action="skip-rewards">건너뛰기</button><button class="primary" data-action="${rewards.balance === null ? 'lookup-rewards' : 'next-payment'}" ${rewards.consent ? '' : 'disabled'}>${rewards.balance === null ? '적립 조회' : '다음'}</button></div></footer>`;
+}
+export function replaceMarkup(container, markup) {
+  const active = container.ownerDocument?.activeElement;
+  const owned = active && container.contains(active);
+  const id = owned ? active.id : '';
+  const data = owned ? { ...active.dataset } : null;
+  container.innerHTML = markup;
+  if (!owned) return;
+  const controls = [...container.querySelectorAll('button, input')].filter(control => !control.disabled);
+  const match = controls.find(control => id ? control.id === id : data?.action && Object.keys(data).every(key => control.dataset[key] === data[key]));
+  const fallback = data?.action?.endsWith('quantity') && controls.find(control => control.dataset.action === data.action && control.dataset.index === data.index);
+  (match || fallback)?.focus();
 }

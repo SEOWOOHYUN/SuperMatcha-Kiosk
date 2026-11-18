@@ -39,3 +39,12 @@ test('consent rejection and failed storage do not issue order or partial credit'
   assert.throws(() => orders.complete(5800, {phone:'01012345678',consent:true}));
   assert.equal(storage.getItem(), saved);
 });
+test('phone keypad inserts 010 once and enforces an eleven-digit maximum', async () => {
+  const { editPhone } = await import('../js/stamp.js');
+  assert.equal(editPhone('', '010'), '010');
+  assert.equal(editPhone('010', '010'), '010');
+  assert.equal(editPhone('01012345678', '9'), '01012345678');
+  assert.equal(editPhone('010', '지우기'), '01');
+  assert.equal(editPhone('01012345678', '전체 삭제'), '');
+  assert.equal(editPhone('010', '<'), '010');
+});

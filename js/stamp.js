@@ -12,3 +12,9 @@ export class StampModel {
     return state.rewards[phone] ?? 0;
   }
 }
+export function editPhone(phone, key) {
+  if (key === '전체 삭제') return '';
+  if (key === '지우기') return phone.slice(0, -1);
+  if (key === '010') return phone || '010';
+  return /^\d$/.test(key) ? (phone + key).slice(0, 11) : phone;
+}

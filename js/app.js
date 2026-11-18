@@ -1,9 +1,9 @@
 import { MenuModel } from './menu.js';
 import { CartModel } from './cart.js';
 import { PaymentModel } from './payment.js';
-import { StampModel } from './stamp.js';
+import { StampModel, editPhone } from './stamp.js';
 import { OrderModel, readState } from './order.js';
-import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView } from './view.js';
+import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView, replaceMarkup } from './view.js';
 const menus = new MenuModel();
 const cart = new CartModel();
 const payment = new PaymentModel();
@@ -25,15 +25,15 @@ let orderType = '';
 let draft = null;
 let lastMenuId = '';
 function render() {
-  if (screen === 'start') root.innerHTML = startView(menus.get('M01'));
-  if (screen === 'menu') root.innerHTML = menuView(menus, category, cart.getCount(), cart.getTotal());
-  if (screen === 'cart') root.innerHTML = cartView(cart, orderType);
-  if (screen === 'rewards') root.innerHTML = rewardsView(rewards, cart.getTotal());
+  if (screen === 'start') replaceMarkup(root, startView(menus.get('M01')));
+  if (screen === 'menu') replaceMarkup(root, menuView(menus, category, cart.getCount(), cart.getTotal()));
+  if (screen === 'cart') replaceMarkup(root, cartView(cart, orderType));
+  if (screen === 'rewards') replaceMarkup(root, rewardsView(rewards, cart.getTotal()));
   if (screen === 'payment') {
-    root.innerHTML = paymentView(cart.getTotal(), orderType, payment.pending, paymentError);
+    replaceMarkup(root, paymentView(cart.getTotal(), orderType, payment.pending, paymentError));
     root.querySelector('.home').disabled = payment.pending;
   }
-  if (screen === 'complete') root.innerHTML = completeView(order, orderType, 10);
+  if (screen === 'complete') replaceMarkup(root, completeView(order, orderType, 10));
 }
 function go(next) {
   screen = next;
@@ -47,7 +47,7 @@ function reset() {
   if (dialog.open) dialog.close();
   go('start');
 }
-function renderOptions() { dialog.innerHTML = optionsView(draft); }
+function renderOptions() { replaceMarkup(dialog, optionsView(draft)); }
 function closeOptions() {
   dialog.close(); draft = null;
   root.querySelector(`[data-id="${lastMenuId}"]`)?.focus();
@@ -90,7 +90,7 @@ document.addEventListener('click', async event => {
     if (action === 'checkout' && cart.items.length) { clearRewards(); paymentError = ''; return go('rewards'); }
     if (action === 'key' && rewards.consent) {
       const key = button.dataset.key;
-      rewards.phone = key === '전체 삭제' ? '' : key === '지우기' ? rewards.phone.slice(0, -1) : (rewards.phone + key).slice(0, 11);
+      rewards.phone = editPhone(rewards.phone, key);
       rewards.balance = null; rewards.error = ''; enrollment = null; render(); return;
     }
     if (action === 'lookup-rewards') {
