@@ -41,5 +41,15 @@ export function paymentView(total, orderType, pending, error = '') {
     <footer class="bottom-bar"><div class="actions"><button data-action="back-cart" ${pending ? 'disabled' : ''}>이전</button></div></footer>`;
 }
 export function completeView(order, orderType, seconds) {
-  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="complete screen"><div><h1 tabindex="-1">THANK YOU</h1><p>주문이 완료되었습니다 · ${orderType}</p></div><div class="order-number"><span>ORDER NO.</span><strong>${order.orderNo}</strong></div><p class="pickup">주문번호가 호출되면 음료를 받아 가세요.<br><span id="countdown">${seconds}</span>초 후 처음 화면으로 돌아갑니다.</p></section><footer class="bottom-bar complete-footer"><div class="actions"><button data-action="finish">확인</button></div></footer>`;
+  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="complete screen"><div><h1 tabindex="-1">THANK YOU</h1><p>주문이 완료되었습니다 · ${orderType}</p></div><div class="order-number"><span>ORDER NO.</span><strong>${order.orderNo}</strong></div>${order.earned ? `<div class="completion-reward"><span>적립이 완료되었습니다</span><strong>+${money(order.earned)}원</strong><small>누적 적립금 ${money(order.balance)}원</small></div>` : ''}<p class="pickup">주문번호가 호출되면 음료를 받아 가세요.<br><span id="countdown">${seconds}</span>초 후 처음 화면으로 돌아갑니다.</p></section><footer class="bottom-bar complete-footer"><div class="actions"><button data-action="finish">확인</button></div></footer>`;
+}
+export function rewardsView(rewards, total) {
+  const formatted = rewards.phone.replace(/^(\d{3})(\d{0,4})(\d{0,4})$/, (_, a, b, c) => a + (b ? '-' + b : '') + (c ? '-' + c : ''));
+  return `${header()}<section class="page-content scroll-area">${title('REWARDS', '결제금액의 2%를 적립해 드려요')}
+    <div class="consent-panel"><strong>개인정보 수집·이용 동의</strong><p>수집 항목: 휴대전화번호, 적립 금액<br>이용 목적: 적립 내역 조회 및 적립<br>보관: 이 브라우저의 데이터 삭제 시까지<br>동의를 거부해도 적립 없이 주문할 수 있습니다.</p><label><input id="consent" type="checkbox" ${rewards.consent ? 'checked' : ''}> 위 내용에 동의합니다</label></div>
+    <label class="sr-only" for="phone">적립할 휴대전화번호</label><input id="phone" class="phone-input" type="tel" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="010-0000-0000" value="${formatted}" ${rewards.consent ? '' : 'disabled'} aria-describedby="phone-help"><p id="phone-help" class="phone-help">010으로 시작하는 11자리 번호</p>
+    <div class="keypad">${['1','2','3','4','5','6','7','8','9','지우기','0','전체 삭제'].map(key => `<button data-action="key" data-key="${key}" ${rewards.consent ? '' : 'disabled'} class="${key.length > 1 ? 'text-key' : ''}">${key}</button>`).join('')}</div>
+    ${rewards.balance !== null ? `<div class="reward-balance"><span>현재 적립금</span><strong>${money(rewards.balance)}원</strong></div><div class="expected-reward"><span>이번 주문 적립 예정</span><strong>+${money(Math.floor(total / 50))}원</strong></div>` : ''}
+    <div class="feedback ${rewards.error ? 'error' : ''}" role="status">${escape(rewards.error)}</div></section>
+    <footer class="bottom-bar"><div class="actions"><button data-action="skip-rewards">건너뛰기</button><button class="primary" data-action="${rewards.balance === null ? 'lookup-rewards' : 'next-payment'}" ${rewards.consent ? '' : 'disabled'}>${rewards.balance === null ? '적립 조회' : '다음'}</button></div></footer>`;
 }
