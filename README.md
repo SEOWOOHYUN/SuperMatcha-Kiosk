@@ -1,20 +1,6 @@
-# SUPER MATCHA KIOSK
+# SUPER MATCHA KIOSK(소프트웨어공학 1조)
 
-한국외국어대학교 소프트웨어공학 1조 설계서를 바탕으로 만든 HTML/CSS/바닐라 JavaScript UI MVP입니다. 외부 JavaScript 라이브러리와 결제 서버를 사용하지 않습니다.
-
-## 실행
-
-Node.js 22 이상에서 의존성 설치 없이 실행합니다.
-
-```sh
-npm run build
-```
-
-생성된 `kiosk.html`을 Chrome에서 열면 됩니다. 개발 시 `npm start` 후 http://127.0.0.1:4173 에서 모듈 원본을 실행할 수 있습니다(Python 3 필요). 이미지와 글꼴은 외부 URL을 사용하므로 인터넷이 필요합니다.
-
-```sh
-npm test
-```
+설계서를 바탕으로 만든 HTML/CSS/바닐라 JavaScript UI MVP
 
 ## 주문 흐름
 
@@ -27,35 +13,3 @@ npm test
 - 결제 화면의 실패 체험 체크박스로 실패·재시도를 확인할 수 있습니다.
 - 실패 시 주문·적립이 생성되지 않습니다. 중복 클릭은 차단합니다.
 - 완료 화면에서 확인을 누르거나 10초가 지나면 장바구니·입력 번호를 지우고 첫 화면으로 돌아갑니다.
-
-## 저장과 범위
-
-`localStorage`의 `supermatcha_kiosk_v1`에 마지막 주문번호와 동의한 전화번호별 적립금을 한 번에 저장합니다. 결제 정보와 바코드는 수집·저장하지 않습니다. 저장소가 손상되거나 쓸 수 없으면 오류를 표시하며 성공으로 처리하지 않습니다. 브라우저 데이터를 삭제하면 적립금과 주문번호도 삭제됩니다.
-
-단일 브라우저 탭에서 쓰는 과제용 데모입니다. 실제 결제·카메라·바코드 리더기 연동, 적립금 사용, 다중 단말 동기화는 포함하지 않습니다. 실제 고객정보나 운영 매출 장부로 사용하지 않습니다. file:// 저장소 동작은 브라우저에 따라 다르므로 안정적인 시연은 로컬 HTTP 실행을 권장합니다.
-
-설계서에 명시된 가격(말차 라떼 5,800원, 브루드 티 5,300원, 코코넛/에스프레소 라떼 6,300원, 롤케이크 조각 6,600원·홀 24,900원)을 반영했습니다. 나머지 가격과 옵션 추가금액은 시연용 예시이며 실제 매장 확인이 필요합니다.
-
-## 브랜치와 커밋
-
-main에는 커밋하거나 병합하지 않았습니다. 아래 브랜치는 앞 브랜치 위에 순서대로 쌓이며, `feat/easy-pay-scan`에 전체 최신 MVP가 있습니다.
-
-1. `feat/start-menu` — 초기 화면·카테고리·메뉴
-2. `feat/options-cart` — 옵션·수량·장바구니
-3. `feat/payment-order` — 가상 결제·주문번호
-4. `feat/phone-rewards` — 2% 적립·010 키·접근성·실행본 빌드
-5. `feat/start-screen-refinement` — 사진 제거·첫 화면 자간 조정
-6. `feat/easy-pay-scan` — 결제 서비스 선택·바코드 화면·통합 검증
-
-작업 환경의 GitHub DNS 제한으로 원격 업로드가 완료되지 않았습니다. 네트워크와 GitHub 인증이 가능한 터미널에서 다음 명령을 실행하면 main을 수정하지 않고 기능 브랜치만 업로드합니다.
-
-```sh
-cd /Users/seowoo/supermatcha/kiosk
-git push -u origin feat/start-menu feat/options-cart feat/payment-order feat/phone-rewards feat/start-screen-refinement feat/easy-pay-scan
-```
-
-## 자료 출처
-
-UI: 사용자 제공 `1조_설계서.pdf` 7~15쪽 및 후속 요청.
-사진·메뉴명: [슈퍼말차 공식 메뉴](https://supermatcha.com/category/menu/45/). 과제용 참조이며 실제 운영/배포 시 권리자의 허락이 필요합니다.
-글꼴: Google Fonts Anton, 에스코어 드림 5 Medium/8 Heavy. 로딩 실패 시 시스템 글꼴로 표시합니다.
