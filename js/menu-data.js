@@ -1,7 +1,7 @@
 export const categories = ['SUPER MATCHA', 'SUPER BORI', 'REFRESHERS', 'SOFT SERVE', 'COFFEE', 'BAKERY'];
 export const categoryNames = ['말차', '보리', '에이드', '소프트 서브', '커피', '베이커리'];
 const temperature = { name: '온도', label: 'TEMPERATURE', choices: ['ICE', 'HOT'] };
-const sweetness = { name: '당도', label: 'SWEETNESS', choices: ['0%', '50%', '100%'] };
+const sweetness = { name: '당도', label: 'SWEETNESS', choices: ['50%', '70%', '100%'] };
 const milk = { name: '우유', label: 'MILK', choices: ['기본 우유', '오트 밀크'], extraPrice: { '오트 밀크': 500 } };
 const size = { name: '크기', label: 'SIZE', choices: ['조각', '홀'], extraPrice: { '홀': 18300 } };
 const latte = [temperature, sweetness, milk];

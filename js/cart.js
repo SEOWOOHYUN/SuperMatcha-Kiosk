@@ -1,5 +1,5 @@
 function validateQuantity(quantity) {
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new Error('수량은 1~10개로 선택해 주세요.');
+  if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('수량은 1개 이상의 정수로 선택해 주세요.');
 }
 export function itemPrice(item) {
   return (item.menu.price + item.menu.options.reduce((sum, option) => sum + (option.extraPrice?.[item.selected[option.name]] ?? 0), 0)) * item.quantity;
