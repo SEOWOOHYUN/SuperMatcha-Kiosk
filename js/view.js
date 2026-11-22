@@ -91,6 +91,6 @@ export function barcodeView(provider, total, pending, error = '') {
     <div class="scanner" aria-label="결제 바코드 스캔 안내"><div class="scan-phone"><span class="phone-camera"></span><span class="scan-app">${service.label}</span><svg viewBox="0 0 150 70" role="img" aria-label="예시 바코드"><path fill="currentColor" d="M3 5h3v60H3z M10 5h6v60h-6z M21 5h2v60h-2z M27 5h8v60h-8z M40 5h3v60h-3z M47 5h2v60h-2z M54 5h7v60h-7z M66 5h3v60h-3z M74 5h6v60h-6z M84 5h2v60h-2z M91 5h8v60h-8z M104 5h3v60h-3z M113 5h6v60h-6z M124 5h2v60h-2z M132 5h4v60h-4z M141 5h6v60h-6z"/></svg><span class="scan-demo">DEMO</span></div><span class="scan-line"></span></div>
     <p class="scan-instruction">휴대전화의 화면 밝기를 높이고<br>결제 바코드를 리더기에 대 주세요.</p>
     <div class="feedback ${error ? 'error' : ''}" role="status">${pending ? '<span class="spinner"></span> 바코드를 확인하고 있습니다…' : escape(error) || '바코드 스캔 대기 중'}</div>
-    <p class="payment-note">체험 화면입니다. 아래 버튼으로 스캔 완료를 체험할 수 있습니다.</p></section>
+    </section>
     <footer class="bottom-bar"><div class="total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div><div class="actions"><button data-action="back-providers" ${pending ? 'disabled' : ''}>이전</button><button class="primary" data-action="scan-pay" data-method="easy" ${pending ? 'disabled' : ''}>스캔 완료</button></div></footer>`;
 }
