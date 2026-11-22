@@ -10,7 +10,7 @@ export function startView() {
   return `<section class="start screen"><h1 class="start-logo" aria-label="SUPER MATCHA">SUPER<br>MATCHA</h1>
     <div class="start-bottom"><p>이용 방법을 선택해 주세요</p>
     <div class="actions"><button data-action="start" data-type="먹고 가기">먹고 가기<span>EAT IN</span></button><button data-action="start" data-type="포장하기">포장하기<span>TAKE OUT</span></button></div>
-    <small class="demo-label">UI DEMO · 실제 결제가 발생하지 않습니다</small></div></section>`;
+    </div></section>`;
 }
 export function menuView(model, category, count = 0, total = 0) {
   return `${header()}<nav class="categories" aria-label="메뉴 카테고리">${model.categories.map(c => `<button data-action="category" data-category="${c}" aria-pressed="${c === category}">${c}</button>`).join('')}</nav>
@@ -37,12 +37,23 @@ export function paymentView(total, orderType, pending, error = '') {
   return `${header()}<section class="page-content scroll-area">${title('PAYMENT', '결제 수단을 선택해 주세요', orderType)}
     <div class="payment-total total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div>
     <div class="payment-methods">${[['card','CARD','카드 결제',cardIcon],['easy','EASY PAY','간편 결제',phoneIcon]].map(([method,en,ko,icon]) => `<button data-action="pay" data-method="${method}" ${pending ? 'disabled' : ''}>${icon}<span><strong>${en}</strong><small>${ko}</small></span><span class="arrow" aria-hidden="true">↗</span></button>`).join('')}</div>
-    <p class="payment-note">실제 청구가 없는 가상 결제입니다.</p><label class="simulate"><input type="checkbox" id="fail-payment" ${pending ? 'disabled' : ''}> 이번 결제 실패 체험</label>
+    <label class="simulate"><input type="checkbox" id="fail-payment" ${pending ? 'disabled' : ''}> 이번 결제 실패 체험</label>
     <div class="feedback ${error ? 'error' : ''}" role="status">${pending ? '<span class="spinner"></span> 결제를 진행하고 있습니다…' : escape(error)}</div></section>
     <footer class="bottom-bar"><div class="actions"><button data-action="back-cart" ${pending ? 'disabled' : ''}>이전</button></div></footer>`;
 }
+const receiptIcon = (short = false) => `<svg viewBox="0 0 80 90" aria-hidden="true"><path d="M15 5h50v75l-8-5-8 5-9-5-8 5-8-5-9 5z" fill="#eee" stroke="currentColor" stroke-width="3"/><path d="M26 24h28M26 33h28" stroke="currentColor" stroke-width="3"/>${short ? '<text x="40" y="61" text-anchor="middle" font-size="25" font-weight="900" fill="#111">23</text>' : '<path d="M26 45h28M26 55h18M26 65h28" stroke="currentColor" stroke-width="3"/>'}</svg>`;
 export function completeView(order, orderType, seconds) {
-  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="complete screen"><div><h1 tabindex="-1">THANK YOU</h1><p>주문이 완료되었습니다 · ${orderType}</p></div><div class="order-number"><span>ORDER NO.</span><strong>${order.orderNo}</strong></div>${order.earned ? `<div class="completion-reward"><span>적립이 완료되었습니다</span><strong>+${money(order.earned)}원</strong><small>누적 적립금 ${money(order.balance)}원</small></div>` : ''}<p class="pickup">주문번호가 호출되면 음료를 받아 가세요.<br><span id="countdown">${seconds}</span>초 후 처음 화면으로 돌아갑니다.</p></section><footer class="bottom-bar complete-footer"><div class="actions"><button data-action="finish">확인</button></div></footer>`;
+  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="complete screen success-content"><div><span class="result-mark" aria-hidden="true">✓</span><h1 tabindex="-1">결제 완료</h1><p>주문이 완료되었습니다 · ${orderType}</p></div><div class="order-number"><span>ORDER NO. · 주문번호</span><strong>${order.orderNo}</strong></div>${order.earned ? `<div class="completion-reward"><span>적립이 완료되었습니다</span><strong>+${money(order.earned)}원</strong><small>누적 적립금 ${money(order.balance)}원</small></div>` : ''}<p class="pickup">${order.method === '카드 결제' ? '카드를 챙겨 주세요.<br>' : ''}주문번호가 호출되면 음료를 받아 가세요.</p></section><footer class="bottom-bar complete-footer"><p class="receipt-question">어떤 내역을 받으시겠어요?</p><div class="actions receipt-actions"><button data-action="receipt" data-kind="full">${receiptIcon()}<span>영수증 받기</span></button><button data-action="receipt" data-kind="number">${receiptIcon(true)}<span>주문번호만 받기</span></button></div><p class="pickup countdown-note"><span id="countdown">${seconds}</span>초 후 처음 화면으로 돌아갑니다.</p></footer>`;
+}
+export function receiptView(order, orderType, kind) {
+  const full = kind === 'full';
+  return `<header class="topbar"><span class="wordmark">SUPER MATCHA</span></header><section class="page-content scroll-area receipt-content">${title(full ? 'RECEIPT' : 'ORDER TICKET', full ? '영수증' : '주문번호표')}<article class="paper-ticket"><span class="wordmark">SUPER MATCHA</span><p>${orderType}</p><span>주문번호</span><strong class="ticket-number">${order.orderNo}</strong>${full ? `<div class="receipt-items">${order.items.map(item => `<div><p>${escape(item.menu.name)} × ${item.quantity}<small>${escape(Object.values(item.selected).join(' · '))}</small></p><strong>${money(itemPrice(item))}원</strong></div>`).join('')}</div><div class="receipt-total"><span>결제 금액</span><strong>${money(order.total)}원</strong></div><p class="receipt-method">${order.method}</p>${order.earned ? `<p>이번 주문 적립 +${money(order.earned)}원</p>` : ''}` : ''}<p class="ticket-thanks">주문번호가 호출되면 음료를 받아 가세요.<br>감사합니다.</p></article></section><footer class="bottom-bar"><p class="pickup countdown-note"><span id="countdown">10</span>초 후 처음 화면으로 돌아갑니다.</p><div class="actions"><button class="primary" data-action="finish">확인</button></div></footer>`;
+}
+export function cardView(total, pending) {
+  return `${header()}<section class="page-content scroll-area scan-content">${title('INSERT CARD', '신용카드를 투입구에 넣어 주세요')}<svg class="card-guide" viewBox="0 0 320 340" role="img" aria-label="IC칩이 보이는 카드의 칩 쪽을 아래 카드 투입구에 넣는 그림"><rect x="30" y="220" width="260" height="100" rx="18" fill="#dce2da" stroke="#111" stroke-width="4"/><rect x="65" y="240" width="190" height="13" rx="6" fill="#111"/><rect x="92" y="35" width="136" height="200" rx="12" fill="#03bd5a" stroke="#111" stroke-width="4"/><text x="111" y="72" font-family="Arial,sans-serif" font-weight="900" font-size="15">CREDIT CARD</text><rect x="138" y="175" width="44" height="34" rx="5" fill="#ead296" stroke="#111" stroke-width="2"/><path d="M152 175v34m16-34v34m-30-23h44m-44 12h44" stroke="#111" stroke-width="1.5"/><path d="M266 117v67m-13-13 13 14 13-14" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><text x="160" y="288" text-anchor="middle" font-size="15" font-weight="bold">IC CARD</text></svg><p class="scan-instruction">IC칩이 위로 보이도록<br>칩이 있는 쪽부터 끝까지 넣어 주세요.</p><p class="payment-note">결제가 끝날 때까지 카드를 빼지 마세요.</p><div class="feedback" role="status">${pending ? '<span class="spinner"></span> 카드를 확인하고 있습니다…' : '카드 삽입을 기다리고 있습니다.'}</div></section><footer class="bottom-bar"><div class="total"><span>TOTAL</span><strong>${money(total)}<small>원</small></strong></div><div class="actions"><button data-action="back-payment" ${pending ? 'disabled' : ''}>이전</button><button class="primary" data-action="card-pay" ${pending ? 'disabled' : ''}>카드 삽입 완료</button></div></footer>`;
+}
+export function failureView(error, heading = '결제 실패') {
+  return `${header()}<section class="page-content failure-content"><span class="result-mark failure-mark" aria-hidden="true">!</span><p class="failure-en">PLEASE TRY AGAIN</p><h1 tabindex="-1">${heading}</h1><p role="alert">${escape(error)}</p><p class="failure-help">담아두신 메뉴는 그대로 유지됩니다.</p></section><footer class="bottom-bar"><div class="actions"><button data-action="back-payment">다른 결제 수단</button><button class="primary" data-action="retry-payment">다시 시도</button></div></footer>`;
 }
 export function rewardsView(rewards, total) {
   const formatted = rewards.phone.replace(/^(\d{3})(\d{0,4})(\d{0,4})$/, (_, a, b, c) => a + (b ? '-' + b : '') + (c ? '-' + c : ''));
@@ -64,7 +75,7 @@ export function replaceMarkup(container, markup) {
   const controls = [...container.querySelectorAll('button, input')].filter(control => !control.disabled);
   const match = controls.find(control => id ? control.id === id : data?.action && Object.keys(data).every(key => control.dataset[key] === data[key]));
   const fallback = data?.action?.endsWith('quantity') && controls.find(control => control.dataset.action === data.action && control.dataset.index === data.index);
-  (match || fallback)?.focus();
+  if (match || fallback) (match || fallback).focus();
 }
 export function providersView(total, orderType) {
   return `${header()}<section class="page-content scroll-area">${title('EASY PAY', '사용하실 간편결제를 선택해 주세요', orderType)}

@@ -3,7 +3,7 @@ import { CartModel } from './cart.js';
 import { PaymentModel, payProviders } from './payment.js';
 import { StampModel, editPhone } from './stamp.js';
 import { OrderModel, readState } from './order.js';
-import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView, providersView, barcodeView, replaceMarkup } from './view.js';
+import { startView, menuView, optionsView, cartView, paymentView, completeView, rewardsView, providersView, barcodeView, cardView, failureView, receiptView, replaceMarkup } from './view.js';
 const menus = new MenuModel();
 const cart = new CartModel();
 const payment = new PaymentModel();
@@ -13,7 +13,10 @@ let order = null;
 let completionTimer;
 let paymentError = '';
 let easyProvider = '';
-let failNextScan = false;
+let failNextPayment = false;
+let lastPaymentScreen = 'card';
+let receiptKind = 'number';
+let failureTitle = '결제 실패';
 const stamps = new StampModel();
 let enrollment = null;
 let rewards = {phone:'', consent:false, balance:null, error:''};
@@ -40,15 +43,30 @@ function render() {
     replaceMarkup(root, barcodeView(easyProvider, cart.getTotal(), payment.pending, paymentError));
     root.querySelector('.home').disabled = payment.pending;
   }
-  if (screen === 'complete') replaceMarkup(root, completeView(order, orderType, 10));
+  if (screen === 'card') {
+    replaceMarkup(root, cardView(cart.getTotal(), payment.pending));
+    root.querySelector('.home').disabled = payment.pending;
+  }
+  if (screen === 'failure') replaceMarkup(root, failureView(paymentError, failureTitle));
+  if (screen === 'complete') replaceMarkup(root, completeView(order, orderType, 30));
+  if (screen === 'receipt') replaceMarkup(root, receiptView(order, orderType, receiptKind));
 }
 function go(next) {
   screen = next;
   render();
   root.querySelector('h1')?.focus();
 }
+function startCountdown(seconds) {
+  clearInterval(completionTimer);
+  completionTimer = setInterval(() => {
+    seconds -= 1;
+    if (seconds <= 0) return reset();
+    const countdown = document.querySelector('#countdown');
+    if (countdown) countdown.textContent = seconds;
+  }, 1000);
+}
 function reset() {
-  clearRewards(); easyProvider = ''; failNextScan = false;
+  clearRewards(); easyProvider = ''; failNextPayment = false;
   clearInterval(completionTimer); order = null; paymentError = '';
   cart.clear(); orderType = ''; category = menus.categories[0]; draft = null;
   if (dialog.open) dialog.close();
@@ -115,29 +133,41 @@ document.addEventListener('click', async event => {
     if (action === 'provider' && screen === 'easy-providers' && Object.hasOwn(payProviders, button.dataset.provider)) {
       easyProvider = button.dataset.provider; paymentError = ''; return go('barcode');
     }
-    if (action === 'pay' && screen === 'payment' && button.dataset.method === 'easy') {
-      failNextScan = root.querySelector('#fail-payment').checked;
-      paymentError = ''; return go('easy-providers');
+    if (action === 'receipt' && screen === 'complete' && ['full', 'number'].includes(button.dataset.kind)) {
+      receiptKind = button.dataset.kind;
+      go('receipt'); startCountdown(10); return;
     }
-    if (((action === 'pay' && screen === 'payment') || (action === 'scan-pay' && screen === 'barcode')) && cart.items.length) {
-      const fail = action === 'scan-pay' ? failNextScan : root.querySelector('#fail-payment').checked;
-      failNextScan = false;
+    if (action === 'retry-payment' && screen === 'failure') {
+      paymentError = ''; return go(lastPaymentScreen);
+    }
+    if (action === 'pay' && screen === 'payment' && cart.items.length) {
+      failNextPayment = root.querySelector('#fail-payment').checked;
       paymentError = '';
-      const result = payment.pay(button.dataset.method, cart.getTotal(), fail, easyProvider);
+      return go(button.dataset.method === 'easy' ? 'easy-providers' : 'card');
+    }
+    if (((action === 'card-pay' && screen === 'card') || (action === 'scan-pay' && screen === 'barcode')) && cart.items.length) {
+      lastPaymentScreen = screen;
+      const method = screen === 'card' ? 'card' : 'easy';
+      const fail = failNextPayment;
+      failNextPayment = false;
+      paymentError = '';
+      const result = payment.pay(method, cart.getTotal(), fail, easyProvider);
       render();
       try {
-        if (!await result) { paymentError = '결제가 완료되지 않았습니다. 다시 시도하거나 다른 수단을 선택해 주세요.'; return render(); }
+        if (!await result) {
+          failureTitle = '결제 실패';
+          paymentError = '결제가 승인되지 않았습니다. 카드 또는 결제 앱을 확인한 후 다시 시도해 주세요.';
+          return go('failure');
+        }
         order = orders.complete(cart.getTotal(), enrollment);
+        order.items = cart.items.map(item => ({...item, selected: {...item.selected}}));
+        order.method = method === 'card' ? '카드 결제' : payProviders[easyProvider].name;
         clearRewards();
         cart.clear();
-        go('complete');
-        let seconds = 10;
-        completionTimer = setInterval(() => {
-          seconds -= 1;
-          if (seconds <= 0) return reset();
-          document.querySelector('#countdown').textContent = seconds;
-        }, 1000);
-      } catch (error) { paymentError = error.message; render(); }
+        go('complete'); startCountdown(30);
+      } catch (error) {
+        failureTitle = '주문 처리 실패'; paymentError = error.message; go('failure');
+      }
       return;
     }
     if (action === 'cart' && cart.items.length) return go('cart');

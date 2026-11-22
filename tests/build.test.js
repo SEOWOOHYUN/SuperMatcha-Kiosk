@@ -53,7 +53,10 @@ test('controller waits for provider and scan, credits once, then clears the orde
     await payment;
     const stored=JSON.parse([...app.values.values()][0]);
     assert.deepEqual(stored,{lastOrderNo:1,rewards:{'01000000000':116}});
-    assert.ok(app.root.innerHTML.includes('THANK YOU'));
+    assert.ok(app.root.innerHTML.includes('결제 완료'));
+    assert.ok(app.root.innerHTML.includes('영수증 받기'));
+    await app.click('receipt', {kind:'number'});
+    assert.ok(app.root.innerHTML.includes('주문번호표'));
     assert.ok(!app.root.innerHTML.includes('01000000000'));
     for(let i=0;i<10;i++)app.tick();
     assert.ok(app.root.innerHTML.includes('먹고 가기'));
@@ -63,9 +66,44 @@ test('failed card payment keeps the cart and skipped rewards stay absent after r
   const app=launchDemo(); await fillCart(app); await app.click('skip-rewards');
   app.controls.fail.checked=true;
   await app.click('pay',{method:'card'});
+  assert.ok(app.root.innerHTML.includes('IC칩'));
   assert.equal(app.values.size,0);
+  await app.click('card-pay');
+  assert.equal(app.values.size,0);
+  assert.ok(app.root.innerHTML.includes('결제 실패'));
   assert.ok(app.root.innerHTML.includes('다시 시도'));
   app.controls.fail.checked=false;
-  await app.click('pay',{method:'card'});
+  await app.click('retry-payment');
+  await app.click('card-pay');
   assert.deepEqual(JSON.parse([...app.values.values()][0]),{lastOrderNo:1,rewards:{}});
+});
+
+test('card insertion waits for confirmation and receipt retains items after cart clears', async () => {
+  const app=launchDemo(); await fillCart(app); await app.click('skip-rewards');
+  await app.click('pay',{method:'card'});
+  assert.ok(app.root.innerHTML.includes('IC칩'));
+  assert.equal(app.values.size,0);
+  await app.click('card-pay');
+  assert.ok(app.root.innerHTML.includes('결제 완료'));
+  const saved=[...app.values.values()][0];
+  await app.click('receipt',{kind:'full'});
+  assert.ok(app.root.innerHTML.includes('슈퍼말차 라떼'));
+  assert.ok(app.root.innerHTML.includes('5,800'));
+  assert.ok(!app.root.innerHTML.includes('01000000000'));
+  await app.click('receipt',{kind:'full'});
+  assert.equal([...app.values.values()][0],saved);
+  await app.click('finish');
+  assert.ok(app.root.innerHTML.includes('먹고 가기'));
+});
+test('easy payment failure has a dedicated result and retry does not issue a duplicate order', async () => {
+  const app=launchDemo(); await fillCart(app); await app.click('skip-rewards');
+  app.controls.fail.checked=true;
+  await app.click('pay',{method:'easy'}); await app.click('provider',{provider:'toss'});
+  await app.click('scan-pay',{method:'easy'});
+  assert.ok(app.root.innerHTML.includes('결제 실패'));
+  assert.equal(app.values.size,0);
+  await app.click('retry-payment');
+  assert.ok(app.root.innerHTML.includes('스캔 완료 체험'));
+  await app.click('scan-pay',{method:'easy'});
+  assert.equal(JSON.parse([...app.values.values()][0]).lastOrderNo,1);
 });

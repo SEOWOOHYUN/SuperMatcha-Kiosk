@@ -15,3 +15,10 @@ test('same-screen replacement restores the active option control', () => {
 test('quantity limit moves focus to the remaining enabled quantity button', () => {
   const f=fixture(true); replaceMarkup(f.container, '<button>limit</button>'); assert.equal(f.focused(),'minus');
 });
+
+test('leaving a screen does not focus a missing control', () => {
+  const f = fixture();
+  f.container.ownerDocument.activeElement.dataset = {action:'start'};
+  assert.doesNotThrow(() => replaceMarkup(f.container, '<h1>Menu</h1>'));
+  assert.equal(f.focused(), undefined);
+});
