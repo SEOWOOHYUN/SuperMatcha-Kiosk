@@ -17,12 +17,12 @@ test('option surcharges and quantities determine totals, deletion clears total',
 });
 test('reject invalid quantity and unsupported options without mutating cart', () => {
   const cart = new CartModel();
-  for (const q of [0,11,-1,1.5,NaN,'2']) assert.throws(() => cart.add(menus.get('S01'), {}, q));
+  for (const q of [0,-1,1.5,NaN,Infinity,'2']) assert.throws(() => cart.add(menus.get('S01'), {}, q));
   assert.throws(() => cart.add(menus.get('S01'), { 크기:'홀' }, 1));
   assert.throws(() => cart.add(menus.get('M01'), { 온도:'COLD' }, 1));
   assert.equal(cart.items.length, 0);
   cart.add(menus.get('S01'), {}, 10);
-  assert.throws(() => cart.setQuantity(0, 11));
+  assert.throws(() => cart.setQuantity(0, 0));
   assert.equal(cart.getTotal(), 45000);
 });
 test('default options are valid and selected objects are copied', () => {
@@ -33,4 +33,13 @@ test('default options are valid and selected objects are copied', () => {
   assert.equal(cart.getTotal(), 24900);
   cart.add(menus.get('M01'), {}, 1);
   assert.equal(cart.getTotal(), 30700);
+});
+
+test('quantities above ten and revised sweetness work', () => {
+  const cart = new CartModel();
+  cart.add(menus.get('M01'), {당도:'70%'}, 11);
+  cart.setQuantity(0, 12);
+  assert.equal(cart.getTotal(), 5800 * 12);
+  assert.deepEqual(menus.get('M01').options.find(o => o.name === '당도').choices, ['50%', '70%', '100%']);
+  assert.throws(() => cart.add(menus.get('M01'), {당도:'0%'}));
 });

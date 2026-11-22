@@ -46,7 +46,7 @@ test('controller waits for provider and scan, credits once, then clears the orde
     await app.click('pay',{method:'easy'});
     assert.ok(app.root.innerHTML.includes('사용하실 간편결제'));
     await app.click('provider',{provider});
-    assert.ok(app.root.innerHTML.includes('스캔 완료 체험'));
+    assert.ok(app.root.innerHTML.includes('스캔 완료'));
     assert.equal(app.values.size,0);
     const payment=app.click('scan-pay',{method:'easy'});
     await app.click('scan-pay',{method:'easy'});
@@ -103,7 +103,24 @@ test('easy payment failure has a dedicated result and retry does not issue a dup
   assert.ok(app.root.innerHTML.includes('결제 실패'));
   assert.equal(app.values.size,0);
   await app.click('retry-payment');
-  assert.ok(app.root.innerHTML.includes('스캔 완료 체험'));
+  assert.ok(app.root.innerHTML.includes('스캔 완료'));
   await app.click('scan-pay',{method:'easy'});
   assert.equal(JSON.parse([...app.values.values()][0]).lastOrderNo,1);
+});
+
+test('order options and cart can increase beyond ten without service badges', async () => {
+  const app = launchDemo();
+  await app.click('start', {type:'포장하기'});
+  await app.click('menu', {id:'M01'});
+  for (let i=0;i<10;i++) await app.click('option-quantity', {delta:'1'});
+  await app.click('add');
+  await app.click('cart');
+  assert.ok(app.root.innerHTML.includes('<output>11</output>'));
+  assert.ok(!app.root.innerHTML.includes('포장하기'));
+  await app.click('cart-quantity', {index:'0',delta:'1'});
+  assert.ok(app.root.innerHTML.includes('<output>12</output>'));
+  await app.click('checkout'); await app.click('skip-rewards');
+  await app.click('pay', {method:'card'}); await app.click('card-pay');
+  assert.ok(app.root.innerHTML.includes('주문이 완료되었습니다.'));
+  assert.ok(!app.root.innerHTML.includes('포장하기'));
 });

@@ -105,7 +105,7 @@ document.addEventListener('click', async event => {
       renderOptions(); dialog.showModal(); return;
     }
     if (action === 'option') { draft.selected[button.dataset.option] = button.dataset.value; renderOptions(); return; }
-    if (action === 'option-quantity') { draft.quantity = Math.max(1, Math.min(10, draft.quantity + Number(delta))); renderOptions(); return; }
+    if (action === 'option-quantity') { draft.quantity = Math.max(1, draft.quantity + Number(delta)); renderOptions(); return; }
     if (action === 'close-options') return closeOptions();
     if (action === 'add') {
       cart.add(draft.menu, draft.selected, draft.quantity);
